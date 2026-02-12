@@ -22,18 +22,37 @@ export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) 
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
+    const [debugInfo, setDebugInfo] = useState<string>("");
+
     useEffect(() => {
         if (machine && isOpen) {
             setLoading(true);
-            fetch(`https://kathryn-nitrocellulosic-martine.ngrok-free.dev/machines/${machine.hostname}/history`)
-                .then(res => res.json())
-                .then(data => {
-                    // Format timestamps for formatting
-                    const formatted = data.map((point: any) => ({
-                        ...point,
-                        time: new Date(point.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-                    }));
-                    setHistory(formatted);
+            const url = `https://kathryn-nitrocellulosic-martine.ngrok-free.dev/machines/${machine.hostname}/history`;
+
+            fetch(url, {
+                headers: {
+                    "ngrok-skip-browser-warning": "true"
+                }
+            })
+                .then(async res => {
+                    const text = await res.text();
+                    try {
+                        const data = JSON.parse(text);
+                        setDebugInfo(`Status: ${res.status}, Points: ${Array.isArray(data) ? data.length : 'Not Array'}`);
+
+                        const formatted = data.map((point: any) => ({
+                            ...point,
+                            time: new Date(point.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                        }));
+                        setHistory(formatted);
+                    } catch (e) {
+                        setDebugInfo(`JSON Error: ${e}, Response: ${text.substring(0, 50)}...`);
+                        console.error("Parse error", e);
+                    }
+                })
+                .catch(err => {
+                    setDebugInfo(`Fetch Error: ${err.message}`);
+                    console.error("Fetch error", err);
                 })
                 .finally(() => setLoading(false));
         }
@@ -199,27 +218,43 @@ export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) 
                                 {/* CPU & RAM Chart */}
                                 <Card className="bg-slate-900/40 border-white/5">
                                     <CardHeader className="py-3"><CardTitle className="text-sm text-slate-400">CPU & RAM History</CardTitle></CardHeader>
-                                    <CardContent className="h-[200px]">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <AreaChart data={history}>
-                                                <defs>
-                                                    <linearGradient id="colorCpu" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
-                                                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                                                    </linearGradient>
-                                                    <linearGradient id="colorRam" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                                    </linearGradient>
-                                                </defs>
-                                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
-                                                <XAxis dataKey="time" stroke="#475569" fontSize={10} tickLine={false} />
-                                                <YAxis stroke="#475569" fontSize={10} tickLine={false} domain={[0, 100]} />
-                                                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }} />
-                                                <Area type="monotone" dataKey="cpu_percent" stroke="#22c55e" fillOpacity={1} fill="url(#colorCpu)" name="CPU %" />
-                                                <Area type="monotone" dataKey="ram_percent" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRam)" name="RAM %" />
-                                            </AreaChart>
-                                        </ResponsiveContainer>
+                                    <CardContent className="h-[250px] relative">
+                                        {/* DEBUG INFO */}
+                                        <div className="absolute top-1 left-2 z-20 text-[10px] text-yellow-500 bg-black/50 px-2 rounded">
+                                            DEBUG: {debugInfo}
+                                        </div>
+
+                                        {loading && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/50 z-10 backdrop-blur-sm">
+                                                <div className="text-green-400 text-xs animate-pulse">Loading History...</div>
+                                            </div>
+                                        )}
+                                        {history.length > 0 ? (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={history}>
+                                                    <defs>
+                                                        <linearGradient id="colorCpu" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
+                                                            <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                                                        </linearGradient>
+                                                        <linearGradient id="colorRam" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
+                                                    <XAxis dataKey="time" stroke="#475569" fontSize={10} tickLine={false} />
+                                                    <YAxis stroke="#475569" fontSize={10} tickLine={false} domain={[0, 100]} />
+                                                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }} />
+                                                    <Area type="monotone" dataKey="cpu_percent" stroke="#22c55e" fillOpacity={1} fill="url(#colorCpu)" name="CPU %" />
+                                                    <Area type="monotone" dataKey="ram_percent" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRam)" name="RAM %" />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        ) : (
+                                            <div className="flex items-center justify-center h-full text-slate-500 text-xs">
+                                                {!loading && "No historical data available. Wait for the agent to send reports..."}
+                                            </div>
+                                        )}
                                     </CardContent>
                                 </Card>
 
@@ -228,32 +263,40 @@ export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) 
                                     <Card className="bg-slate-900/40 border-white/5">
                                         <CardHeader className="py-3"><CardTitle className="text-sm text-slate-400">Network Traffic (KB/s)</CardTitle></CardHeader>
                                         <CardContent className="h-[150px]">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <LineChart data={history}>
-                                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
-                                                    <XAxis dataKey="time" stroke="#475569" fontSize={10} hide />
-                                                    <YAxis stroke="#475569" fontSize={10} tickFormatter={(val) => (val / 1024).toFixed(0)} />
-                                                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }} />
-                                                    <Line type="monotone" dataKey="net_recv_speed" stroke="#06b6d4" dot={false} strokeWidth={2} name="Download" />
-                                                    <Line type="monotone" dataKey="net_sent_speed" stroke="#8b5cf6" dot={false} strokeWidth={2} name="Upload" />
-                                                </LineChart>
-                                            </ResponsiveContainer>
+                                            {history.length > 0 ? (
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <LineChart data={history}>
+                                                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
+                                                        <XAxis dataKey="time" stroke="#475569" fontSize={10} hide />
+                                                        <YAxis stroke="#475569" fontSize={10} tickFormatter={(val) => (val / 1024).toFixed(0)} />
+                                                        <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }} />
+                                                        <Line type="monotone" dataKey="net_recv_speed" stroke="#06b6d4" dot={false} strokeWidth={2} name="Download" />
+                                                        <Line type="monotone" dataKey="net_sent_speed" stroke="#8b5cf6" dot={false} strokeWidth={2} name="Upload" />
+                                                    </LineChart>
+                                                </ResponsiveContainer>
+                                            ) : (
+                                                <div className="flex items-center justify-center h-full text-slate-500 text-xs">No Data</div>
+                                            )}
                                         </CardContent>
                                     </Card>
 
                                     <Card className="bg-slate-900/40 border-white/5">
                                         <CardHeader className="py-3"><CardTitle className="text-sm text-slate-400">Disk I/O (KB/s)</CardTitle></CardHeader>
                                         <CardContent className="h-[150px]">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <LineChart data={history}>
-                                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
-                                                    <XAxis dataKey="time" stroke="#475569" fontSize={10} hide />
-                                                    <YAxis stroke="#475569" fontSize={10} tickFormatter={(val) => (val / 1024).toFixed(0)} />
-                                                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }} />
-                                                    <Line type="monotone" dataKey="disk_read_speed" stroke="#eab308" dot={false} strokeWidth={2} name="Read" />
-                                                    <Line type="monotone" dataKey="disk_write_speed" stroke="#ec4899" dot={false} strokeWidth={2} name="Write" />
-                                                </LineChart>
-                                            </ResponsiveContainer>
+                                            {history.length > 0 ? (
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <LineChart data={history}>
+                                                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
+                                                        <XAxis dataKey="time" stroke="#475569" fontSize={10} hide />
+                                                        <YAxis stroke="#475569" fontSize={10} tickFormatter={(val) => (val / 1024).toFixed(0)} />
+                                                        <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }} />
+                                                        <Line type="monotone" dataKey="disk_read_speed" stroke="#eab308" dot={false} strokeWidth={2} name="Read" />
+                                                        <Line type="monotone" dataKey="disk_write_speed" stroke="#ec4899" dot={false} strokeWidth={2} name="Write" />
+                                                    </LineChart>
+                                                </ResponsiveContainer>
+                                            ) : (
+                                                <div className="flex items-center justify-center h-full text-slate-500 text-xs">No Data</div>
+                                            )}
                                         </CardContent>
                                     </Card>
                                 </div>
