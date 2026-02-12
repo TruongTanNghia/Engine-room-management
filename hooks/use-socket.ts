@@ -56,10 +56,17 @@ export const useSocket = () => {
     const connect = () => {
         // In production, this URL should be configurable
         // In production, this URL should be configurable
-        // Assuming backend is at 222.255.180.225:8000
-        const wsUrl = 'ws://222.255.180.225:8000/ws';
+        // Assuming backend is at that URL
+        const wsUrl = 'wss://kathryn-nitrocellulosic-martine.ngrok-free.dev/ws';
 
-        const socket = new WebSocket(wsUrl);
+        let socket: WebSocket;
+        try {
+            socket = new WebSocket(wsUrl);
+        } catch (err) {
+            console.error("Security Error (Mixed Content): Cannot connect to Insecure WS from Secure HTTPS", err);
+            return;
+        }
+
         socketRef.current = socket;
 
         socket.onopen = () => {
