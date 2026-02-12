@@ -25,7 +25,7 @@ export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) 
     useEffect(() => {
         if (machine && isOpen) {
             setLoading(true);
-            fetch(`http://localhost:8000/machines/${machine.hostname}/history`)
+            fetch(`http://222.255.180.225:8000/machines/${machine.hostname}/history`)
                 .then(res => res.json())
                 .then(data => {
                     // Format timestamps for formatting

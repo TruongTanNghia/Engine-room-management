@@ -55,8 +55,9 @@ export const useSocket = () => {
 
     const connect = () => {
         // In production, this URL should be configurable
-        // Assuming backend is at localhost:8000
-        const wsUrl = 'ws://localhost:8000/ws';
+        // In production, this URL should be configurable
+        // Assuming backend is at 222.255.180.225:8000
+        const wsUrl = 'ws://222.255.180.225:8000/ws';
 
         const socket = new WebSocket(wsUrl);
         socketRef.current = socket;
