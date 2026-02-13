@@ -11,6 +11,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Activity, Cpu, HardDrive, Network, Thermometer, Clock, ShieldCheck, AlertTriangle, XCircle, Sparkles, CheckCircle } from "lucide-react";
 import { formatBytes, formatDuration } from "@/lib/format";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/components/language-context";
 
 interface MachineDetailProps {
     machine: Machine | null;
@@ -19,6 +20,7 @@ interface MachineDetailProps {
 }
 
 export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) {
+    const { t } = useLanguage();
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -151,9 +153,9 @@ export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) 
                                 <div className={`absolute top-0 right-0 p-2 opacity-10 ${healthColor}`}>
                                     <ShieldCheck className="w-16 h-16" />
                                 </div>
-                                <div className="text-xs text-slate-500 uppercase tracking-widest mb-1">Health Score</div>
+                                <div className="text-xs text-slate-500 uppercase tracking-widest mb-1">{t("Health Score")}</div>
                                 <div className={`text-4xl font-black ${healthColor}`}>{score}</div>
-                                <div className={`text-xs font-bold mt-1 ${healthColor}`}>{healthStatus}</div>
+                                <div className={`text-xs font-bold mt-1 ${healthColor}`}>{t(healthStatus)}</div>
                                 {penalties.length > 0 && (
                                     <ul className="mt-3 space-y-1">
                                         {penalties.map((p, i) => (
@@ -171,31 +173,31 @@ export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) 
                                     <div className="p-1 rounded bg-blue-500/10 text-blue-400">
                                         <Sparkles className="w-4 h-4" />
                                     </div>
-                                    <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">AI Analysis</span>
+                                    <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">{t("AI Analysis")}</span>
                                 </div>
                                 <div className={`text-xs font-bold mb-1 flex items-center gap-2 ${aiAssessment.color}`}>
-                                    {aiAssessment.status}
+                                    {t(aiAssessment.status)}
                                 </div>
                                 <p className="text-[10px] text-slate-400 leading-relaxed font-mono">
-                                    {aiAssessment.message}
+                                    {t(aiAssessment.message)}
                                 </p>
                             </div>
 
                             <div className="space-y-3 font-mono text-xs">
                                 <div className="flex justify-between border-b border-white/5 pb-1">
-                                    <span className="text-slate-500">Uptime</span>
+                                    <span className="text-slate-500">{t("Uptime")}</span>
                                     <span className="text-white">{formatDuration(machine.uptime_seconds)}</span>
                                 </div>
                                 <div className="flex justify-between border-b border-white/5 pb-1">
-                                    <span className="text-slate-500">Processes</span>
+                                    <span className="text-slate-500">{t("Processes")}</span>
                                     <span className="text-white">{machine.process_count}</span>
                                 </div>
                                 <div className="flex justify-between border-b border-white/5 pb-1">
-                                    <span className="text-slate-500">Cores (P/L)</span>
+                                    <span className="text-slate-500">{t("Cores (P/L)")}</span>
                                     <span className="text-white">{machine.cpu_cores_physical} / {machine.cpu_cores_logical}</span>
                                 </div>
                                 <div className="flex justify-between border-b border-white/5 pb-1">
-                                    <span className="text-slate-500">CPU Freq</span>
+                                    <span className="text-slate-500">{t("CPU Freq")}</span>
                                     <span className="text-white">{machine.cpu_freq_current?.toFixed(0)} MHz</span>
                                 </div>
                             </div>
@@ -205,19 +207,19 @@ export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) 
                     {/* Main Content Charts */}
                     <div className="col-span-1 md:col-span-3 p-6 overflow-y-auto bg-black/20">
                         <h3 className="text-lg font-bold text-green-400 mb-4 flex items-center gap-2">
-                            <Activity className="w-5 h-5" /> Real-time Performance Metrics
+                            <Activity className="w-5 h-5" /> {t("Real-time Performance Metrics")}
                         </h3>
 
                         <Tabs defaultValue="overview" className="w-full">
                             <TabsList className="bg-slate-900/50 border border-white/5 mb-4">
-                                <TabsTrigger value="overview">Overview</TabsTrigger>
-                                <TabsTrigger value="gpu">GPU & Processes</TabsTrigger>
+                                <TabsTrigger value="overview">{t("Overview")}</TabsTrigger>
+                                <TabsTrigger value="gpu">{t("GPU & Processes")}</TabsTrigger>
                             </TabsList>
 
                             <TabsContent value="overview" className="space-y-6">
                                 {/* CPU & RAM Chart */}
                                 <Card className="bg-slate-900/40 border-white/5">
-                                    <CardHeader className="py-3"><CardTitle className="text-sm text-slate-400">CPU & RAM History</CardTitle></CardHeader>
+                                    <CardHeader className="py-3"><CardTitle className="text-sm text-slate-400">{t("CPU & RAM History")}</CardTitle></CardHeader>
                                     <CardContent className="h-[250px] relative">
                                         {/* DEBUG INFO */}
                                         <div className="absolute top-1 left-2 z-20 text-[10px] text-yellow-500 bg-black/50 px-2 rounded">
@@ -226,7 +228,7 @@ export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) 
 
                                         {loading && (
                                             <div className="absolute inset-0 flex items-center justify-center bg-slate-900/50 z-10 backdrop-blur-sm">
-                                                <div className="text-green-400 text-xs animate-pulse">Loading History...</div>
+                                                <div className="text-green-400 text-xs animate-pulse">{t("Loading History...")}</div>
                                             </div>
                                         )}
                                         {history.length > 0 ? (
@@ -252,7 +254,7 @@ export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) 
                                             </ResponsiveContainer>
                                         ) : (
                                             <div className="flex items-center justify-center h-full text-slate-500 text-xs">
-                                                {!loading && "No historical data available. Wait for the agent to send reports..."}
+                                                {!loading && t("No historical data available. Wait for the agent to send reports...")}
                                             </div>
                                         )}
                                     </CardContent>
@@ -261,7 +263,7 @@ export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) 
                                 {/* Network Speed Chart */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <Card className="bg-slate-900/40 border-white/5">
-                                        <CardHeader className="py-3"><CardTitle className="text-sm text-slate-400">Network Traffic (KB/s)</CardTitle></CardHeader>
+                                        <CardHeader className="py-3"><CardTitle className="text-sm text-slate-400">{t("Network Traffic (KB/s)")}</CardTitle></CardHeader>
                                         <CardContent className="h-[150px]">
                                             {history.length > 0 ? (
                                                 <ResponsiveContainer width="100%" height="100%">
@@ -275,13 +277,13 @@ export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) 
                                                     </LineChart>
                                                 </ResponsiveContainer>
                                             ) : (
-                                                <div className="flex items-center justify-center h-full text-slate-500 text-xs">No Data</div>
+                                                <div className="flex items-center justify-center h-full text-slate-500 text-xs">{t("No Data")}</div>
                                             )}
                                         </CardContent>
                                     </Card>
 
                                     <Card className="bg-slate-900/40 border-white/5">
-                                        <CardHeader className="py-3"><CardTitle className="text-sm text-slate-400">Disk I/O (KB/s)</CardTitle></CardHeader>
+                                        <CardHeader className="py-3"><CardTitle className="text-sm text-slate-400">{t("Disk I/O (KB/s)")}</CardTitle></CardHeader>
                                         <CardContent className="h-[150px]">
                                             {history.length > 0 ? (
                                                 <ResponsiveContainer width="100%" height="100%">
@@ -295,7 +297,7 @@ export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) 
                                                     </LineChart>
                                                 </ResponsiveContainer>
                                             ) : (
-                                                <div className="flex items-center justify-center h-full text-slate-500 text-xs">No Data</div>
+                                                <div className="flex items-center justify-center h-full text-slate-500 text-xs">{t("No Data")}</div>
                                             )}
                                         </CardContent>
                                     </Card>
@@ -315,14 +317,14 @@ export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) 
                                         <CardContent className="space-y-4">
                                             <div className="space-y-1">
                                                 <div className="flex justify-between text-xs">
-                                                    <span className="text-slate-400">Load</span>
+                                                    <span className="text-slate-400">{t("Load")}</span>
                                                     <span className="text-purple-400 font-bold">{machine.gpu.load.toFixed(1)}%</span>
                                                 </div>
                                                 <Progress value={machine.gpu.load} className="h-2 bg-slate-800" indicatorClassName="bg-purple-500" />
                                             </div>
                                             <div className="space-y-1">
                                                 <div className="flex justify-between text-xs">
-                                                    <span className="text-slate-400">VRAM</span>
+                                                    <span className="text-slate-400">{t("VRAM")}</span>
                                                     <span className="text-purple-400 font-bold">{(machine.gpu.memory_used / 1024).toFixed(1)} / {(machine.gpu.memory_total / 1024).toFixed(1)} GB</span>
                                                 </div>
                                                 <Progress value={(machine.gpu.memory_used / machine.gpu.memory_total) * 100} className="h-2 bg-slate-800" indicatorClassName="bg-purple-500" />
@@ -332,23 +334,23 @@ export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) 
                                 ) : (
                                     <Card className="bg-slate-900/40 border-white/5 border-dashed">
                                         <CardContent className="flex items-center justify-center h-[120px] text-slate-500 text-sm">
-                                            No Dedicated GPU Detected
+                                            {t("No Dedicated GPU Detected")}
                                         </CardContent>
                                     </Card>
                                 )}
 
                                 {/* Top Processes Table */}
                                 <Card className="bg-slate-900/40 border-white/5">
-                                    <CardHeader className="py-3"><CardTitle className="text-sm text-slate-400">Top Processes (by CPU)</CardTitle></CardHeader>
+                                    <CardHeader className="py-3"><CardTitle className="text-sm text-slate-400">{t("Top Processes (by CPU)")}</CardTitle></CardHeader>
                                     <CardContent>
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-xs text-left">
                                                 <thead>
                                                     <tr className="border-b border-white/10 text-slate-500">
-                                                        <th className="py-2">PID</th>
-                                                        <th className="py-2">Name</th>
-                                                        <th className="py-2 text-right">CPU</th>
-                                                        <th className="py-2 text-right">MEM</th>
+                                                        <th className="py-2">{t("PID")}</th>
+                                                        <th className="py-2">{t("Name")}</th>
+                                                        <th className="py-2 text-right">{t("CPU")}</th>
+                                                        <th className="py-2 text-right">{t("MEM")}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -361,7 +363,7 @@ export function MachineDetail({ machine, isOpen, onClose }: MachineDetailProps) 
                                                         </tr>
                                                     ))}
                                                     {(!machine.top_processes || machine.top_processes.length === 0) && (
-                                                        <tr><td colSpan={4} className="py-4 text-center text-slate-500">No process data available</td></tr>
+                                                        <tr><td colSpan={4} className="py-4 text-center text-slate-500">{t("No process data available")}</td></tr>
                                                     )}
                                                 </tbody>
                                             </table>

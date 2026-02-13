@@ -1,18 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useSocket, Machine } from "@/hooks/use-socket";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Cpu, Server, Activity, Monitor, HardDrive, Network, Clock, Settings, Upload, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Cpu, Server, Activity, Monitor, HardDrive, Network, Clock, Settings, Upload, Download, Languages, LogOut } from "lucide-react";
 import { formatBytes, formatDuration } from "@/lib/format";
 import { motion, AnimatePresence } from "framer-motion";
 import { MachineDetail } from "@/components/machine-detail";
+import { useLanguage } from "@/components/language-context";
 
 export default function Home() {
+  const router = useRouter();
   const { machines, isConnected } = useSocket();
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
+  const { t, language, setLanguage } = useLanguage();
+  const [authorized, setAuthorized] = useState(false);
+
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem("isLoggedIn");
+    if (isLoggedIn !== "true") {
+      router.push("/login");
+    } else {
+      setAuthorized(true);
+    }
+  }, [router]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    router.push("/login");
+  };
+
+  const toggleLanguage = () => {
+    setLanguage(language === "en" ? "vi" : "en");
+  };
 
   const onlineCount = machines.filter((m) => m.status === "online").length;
 
@@ -21,6 +45,10 @@ export default function Home() {
   const totalRamUsed = machines.reduce((acc, m) => acc + (m.status === 'online' ? m.ram_used : 0), 0);
   const totalNetDown = machines.reduce((acc, m) => acc + (m.status === 'online' ? m.net_recv_speed : 0), 0);
   const totalNetUp = machines.reduce((acc, m) => acc + (m.status === 'online' ? m.net_sent_speed : 0), 0);
+
+  if (!authorized) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <main className="min-h-screen bg-[#050508] text-foreground font-mono p-4 md:p-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#050508] to-black">
@@ -40,28 +68,51 @@ export default function Home() {
               </h1>
               <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
                 <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
-                SYSTEM STATUS: <span className={isConnected ? 'text-green-400' : 'text-red-500'}>{isConnected ? "ONLINE" : "DISCONNECTED"}</span>
+                {t("SYSTEM STATUS")}: <span className={isConnected ? 'text-green-400' : 'text-red-500'}>{isConnected ? t("ONLINE") : t("DISCONNECTED")}</span>
               </div>
             </div>
           </div>
 
-          {/* Top Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full md:w-auto">
-            <div className="p-3 rounded-lg bg-slate-900/30 border border-white/5 backdrop-blur-sm">
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Avg CPU Load</div>
-              <div className="text-xl font-bold text-green-400">{totalCpuLoad.toFixed(1)}%</div>
-            </div>
-            <div className="p-3 rounded-lg bg-slate-900/30 border border-white/5 backdrop-blur-sm">
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Total RAM Used</div>
-              <div className="text-xl font-bold text-blue-400">{formatBytes(totalRamUsed)}</div>
-            </div>
-            <div className="p-3 rounded-lg bg-slate-900/30 border border-white/5 backdrop-blur-sm">
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Network Down</div>
-              <div className="text-xl font-bold text-cyan-400">{formatBytes(totalNetDown)}/s</div>
-            </div>
-            <div className="p-3 rounded-lg bg-slate-900/30 border border-white/5 backdrop-blur-sm">
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Network Up</div>
-              <div className="text-xl font-bold text-purple-400">{formatBytes(totalNetUp)}/s</div>
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            {/* Logout Button */}
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleLogout}
+              className="bg-red-500/10 border-red-500/20 hover:bg-red-500/20 text-red-500"
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
+
+            {/* Language Toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleLanguage}
+              className="bg-slate-900/50 border-white/10 hover:bg-white/10 text-white"
+            >
+              <Languages className="w-4 h-4 mr-2" />
+              {language === "en" ? "Tiếng Việt" : "English"}
+            </Button>
+
+            {/* Top Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full md:w-auto">
+              <div className="p-3 rounded-lg bg-slate-900/30 border border-white/5 backdrop-blur-sm">
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider">{t("Avg CPU Load")}</div>
+                <div className="text-xl font-bold text-green-400">{totalCpuLoad.toFixed(1)}%</div>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-900/30 border border-white/5 backdrop-blur-sm">
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider">{t("Total RAM Used")}</div>
+                <div className="text-xl font-bold text-blue-400">{formatBytes(totalRamUsed)}</div>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-900/30 border border-white/5 backdrop-blur-sm">
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider">{t("Network Down")}</div>
+                <div className="text-xl font-bold text-cyan-400">{formatBytes(totalNetDown)}/s</div>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-900/30 border border-white/5 backdrop-blur-sm">
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider">{t("Network Up")}</div>
+                <div className="text-xl font-bold text-purple-400">{formatBytes(totalNetUp)}/s</div>
+              </div>
             </div>
           </div>
         </header>
@@ -114,7 +165,7 @@ export default function Home() {
                     {/* CPU */}
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400 flex items-center gap-1.5"><Cpu className="h-3.5 w-3.5" /> CPU Load</span>
+                        <span className="text-slate-400 flex items-center gap-1.5"><Cpu className="h-3.5 w-3.5" /> {t("CPU Load")}</span>
                         <span className={`font-mono font-bold ${machine.cpu_percent > 80 ? 'text-red-400' : 'text-green-400'}`}>
                           {machine.cpu_percent.toFixed(1)}%
                         </span>
@@ -125,7 +176,7 @@ export default function Home() {
                     {/* RAM */}
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400 flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" /> Memory</span>
+                        <span className="text-slate-400 flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" /> {t("Memory")}</span>
                         <span className="text-slate-300 font-mono">
                           <span className="text-blue-400">{machine.ram_percent.toFixed(0)}%</span>
                           <span className="text-slate-600 mx-1">/</span>
@@ -138,7 +189,7 @@ export default function Home() {
                     {/* DISK */}
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400 flex items-center gap-1.5"><HardDrive className="h-3.5 w-3.5" /> Storage</span>
+                        <span className="text-slate-400 flex items-center gap-1.5"><HardDrive className="h-3.5 w-3.5" /> {t("Storage")}</span>
                         <span className="text-slate-300 font-mono text-[10px]">
                           {formatBytes(machine.disk_used || 0)} <span className="text-slate-600">of</span> {formatBytes(machine.disk_total || 0)}
                         </span>
@@ -149,14 +200,14 @@ export default function Home() {
                     {/* Network & Processes Grid */}
                     <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
                       <div className="bg-slate-900/50 p-2 rounded border border-white/5 flex flex-col justify-between">
-                        <div className="text-[10px] text-slate-500 flex items-center gap-1"><Network className="w-3 h-3" /> NET I/O</div>
+                        <div className="text-[10px] text-slate-500 flex items-center gap-1"><Network className="w-3 h-3" /> {t("NET I/O")}</div>
                         <div className="flex justify-between items-end mt-1 text-[10px] font-mono">
                           <div className="text-cyan-400 flex items-center gap-0.5"><Download className="w-3 h-3" />{formatBytes(machine.net_recv_speed || 0)}/s</div>
                           <div className="text-purple-400 flex items-center gap-0.5"><Upload className="w-3 h-3" />{formatBytes(machine.net_sent_speed || 0)}/s</div>
                         </div>
                       </div>
                       <div className="bg-slate-900/50 p-2 rounded border border-white/5 flex flex-col justify-between">
-                        <div className="text-[10px] text-slate-500 flex items-center gap-1"><Settings className="w-3 h-3" /> PROCS</div>
+                        <div className="text-[10px] text-slate-500 flex items-center gap-1"><Settings className="w-3 h-3" /> {t("PROCS")}</div>
                         <div className="text-right font-mono text-white text-sm">{machine.process_count || 0}</div>
                       </div>
                     </div>
