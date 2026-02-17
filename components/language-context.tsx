@@ -27,6 +27,7 @@ const dictionary: Dictionary = {
     "Invalid credentials": { en: "Invalid credentials", vi: "Sai tài khoản hoặc mật khẩu" },
     "Welcome back, Commander": { en: "Welcome back, Commander", vi: "Chào mừng trở lại, Chỉ huy" },
     "Access Restricted": { en: "Access Restricted", vi: "Truy cập bị hạn chế" },
+    "Remove": { en: "Remove", vi: "Xóa" },
     "GPU & Processes": { en: "GPU & Processes", vi: "GPU & Tiến trình" },
     "AI Analysis": { en: "AI Analysis", vi: "Phân tích AI" },
 

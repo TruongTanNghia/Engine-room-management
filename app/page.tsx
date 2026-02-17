@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Cpu, Server, Activity, Monitor, HardDrive, Network, Clock, Settings, Upload, Download, Languages, LogOut } from "lucide-react";
+import { Cpu, Server, Activity, Monitor, HardDrive, Network, Clock, Settings, Upload, Download, Languages, LogOut, X } from "lucide-react";
 import { formatBytes, formatDuration } from "@/lib/format";
 import { motion, AnimatePresence } from "framer-motion";
 import { MachineDetail } from "@/components/machine-detail";
@@ -19,6 +19,33 @@ export default function Home() {
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
   const { t, language, setLanguage } = useLanguage();
   const [authorized, setAuthorized] = useState(false);
+  const [hiddenMachines, setHiddenMachines] = useState<Set<string>>(new Set());
+
+  const removeMachine = (hostname: string) => {
+    setHiddenMachines(prev => {
+      const next = new Set(prev);
+      next.add(hostname);
+      return next;
+    });
+  };
+
+  // Filter out hidden machines
+  const visibleMachines = machines.filter(m => {
+    if (hiddenMachines.has(m.hostname) && m.status !== 'online') return false;
+    return true;
+  });
+
+  // Auto-restore: if a hidden machine comes back online, remove it from hidden set
+  useEffect(() => {
+    const restored = machines.filter(m => hiddenMachines.has(m.hostname) && m.status === 'online');
+    if (restored.length > 0) {
+      setHiddenMachines(prev => {
+        const next = new Set(prev);
+        restored.forEach(m => next.delete(m.hostname));
+        return next;
+      });
+    }
+  }, [machines, hiddenMachines]);
 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem("isLoggedIn");
@@ -38,13 +65,13 @@ export default function Home() {
     setLanguage(language === "en" ? "vi" : "en");
   };
 
-  const onlineCount = machines.filter((m) => m.status === "online").length;
+  const onlineCount = visibleMachines.filter((m) => m.status === "online").length;
 
-  // Aggregate stats
-  const totalCpuLoad = machines.reduce((acc, m) => acc + (m.status === 'online' ? m.cpu_percent : 0), 0) / (onlineCount || 1);
-  const totalRamUsed = machines.reduce((acc, m) => acc + (m.status === 'online' ? m.ram_used : 0), 0);
-  const totalNetDown = machines.reduce((acc, m) => acc + (m.status === 'online' ? m.net_recv_speed : 0), 0);
-  const totalNetUp = machines.reduce((acc, m) => acc + (m.status === 'online' ? m.net_sent_speed : 0), 0);
+  // Aggregate stats (only from visible machines)
+  const totalCpuLoad = visibleMachines.reduce((acc, m) => acc + (m.status === 'online' ? m.cpu_percent : 0), 0) / (onlineCount || 1);
+  const totalRamUsed = visibleMachines.reduce((acc, m) => acc + (m.status === 'online' ? m.ram_used : 0), 0);
+  const totalNetDown = visibleMachines.reduce((acc, m) => acc + (m.status === 'online' ? m.net_recv_speed : 0), 0);
+  const totalNetUp = visibleMachines.reduce((acc, m) => acc + (m.status === 'online' ? m.net_sent_speed : 0), 0);
 
   if (!authorized) {
     return null; // Or a loading spinner
@@ -120,14 +147,14 @@ export default function Home() {
         {/* Machine Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
           <AnimatePresence>
-            {machines.map((machine) => (
+            {visibleMachines.map((machine) => (
               <motion.div
                 key={machine.hostname}
                 layout
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, scale: 0.9, height: 0 }}
+                transition={{ duration: 0.3 }}
                 onClick={() => setSelectedMachine(machine)}
                 className="cursor-pointer"
               >
@@ -159,6 +186,18 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
+                    {machine.status !== 'online' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeMachine(machine.hostname);
+                        }}
+                        className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/30 hover:text-red-300 transition-all duration-200 border border-red-500/20 hover:border-red-500/40 z-10"
+                        title={t("Remove")}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
                   </CardHeader>
 
                   <CardContent className="space-y-4 pt-2">
